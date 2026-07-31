@@ -6,6 +6,13 @@ on:
   # Lets you re-run a deploy from the Actions tab without a new commit.
   workflow_dispatch:
 
+# Workflow-level so the build job can self-enable Pages too. Scoping
+# `pages: write` to the deploy job alone makes `configure-pages` fail there.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 # Allow one concurrent deployment; don't cancel a run that's mid-publish.
 concurrency:
   group: pages
@@ -63,9 +70,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    permissions:
-      pages: write
-      id-token: write
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
