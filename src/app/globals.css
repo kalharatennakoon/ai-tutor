@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+/*
+  Dark-first palette. The app is a focused reading surface, so the base is a
+  desaturated near-black with a slight blue cast, and colour is reserved for
+  course identity and interactive state.
+*/
+@theme {
+  --color-ink-950: #08090d;
+  --color-ink-900: #0d0f15;
+  --color-ink-850: #12141c;
+  --color-ink-800: #171a24;
+  --color-ink-700: #232734;
+  --color-ink-600: #333949;
+  --color-ink-500: #545b70;
+  --color-ink-400: #7c8398;
+  --color-ink-300: #a6acbd;
+  --color-ink-200: #cdd2de;
+  --color-ink-100: #e8eaf0;
+
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Keeps anchored headings clear of the sticky header. */
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--color-ink-950);
+  color: var(--color-ink-200);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Ambient gradient wash behind the page content. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(60rem 40rem at 15% -10%, rgba(56, 128, 255, 0.13), transparent 60%),
+    radial-gradient(50rem 35rem at 90% 0%, rgba(168, 85, 247, 0.1), transparent 55%);
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+}
+
+/* Slim scrollbars so chat and code panes don't get visually heavy. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ink-600) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-ink-600);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Visible, consistent focus ring for keyboard users. */
+:focus-visible {
+  outline: 2px solid #818cf8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-rise {
+  animation: fade-rise 0.35s ease-out both;
+}
+
+@keyframes pulse-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Respect users who've asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
