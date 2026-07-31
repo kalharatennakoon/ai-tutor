@@ -29,9 +29,42 @@ tutor chat needs one. Without a key, `/api/tutor` returns a 503 with a message
 explaining what to set, and the chat panel surfaces it inline.
 
 ```bash
-npm run build      # production build
-npm run typecheck  # tsc --noEmit
+npm run build         # production build (includes the tutor API route)
+npm run build:static  # static export for GitHub Pages → out/
+npm run typecheck     # tsc --noEmit
 ```
+
+## Deployment
+
+### GitHub Pages (static)
+
+Pushing to `main` triggers `.github/workflows/deploy-pages.yml`, which builds a
+static export and publishes it. **One manual step is required the first time:**
+Settings → Pages → Source → **GitHub Actions**. (The workflow asks to enable
+this automatically, but that only succeeds if the token has permission.)
+
+The site is served at `https://<user>.github.io/<repo>/`. The workflow passes
+that path prefix to the build via `NEXT_PUBLIC_BASE_PATH`, so renaming the repo
+needs no code change.
+
+> **The AI tutor does not work on GitHub Pages.** Pages serves static files
+> only, and `/api/tutor` needs a server to hold the API key. The workflow
+> deletes `src/app/api` before building, and the chat panel detects the static
+> build and explains this instead of calling a dead endpoint.
+>
+> The fix is *not* to move the key into client code — that publishes it to
+> anyone who views source. Deploy somewhere with server support instead.
+
+Everything else — all lessons, quizzes, and all five labs — works fully on
+Pages, since the labs compute in the browser.
+
+### Anywhere that runs server code
+
+For the complete app including the tutor, deploy to a host that supports
+Next.js server rendering (Vercel, Netlify, Cloudflare, a container, a VPS).
+Set `ANTHROPIC_API_KEY` in that host's environment and deploy normally — no
+config changes, since the export settings only activate when
+`NEXT_PUBLIC_STATIC_EXPORT=true`.
 
 ## Project layout
 

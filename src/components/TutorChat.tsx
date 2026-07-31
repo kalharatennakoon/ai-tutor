@@ -17,6 +17,14 @@ const SUGGESTIONS = [
   "How is this used in production?",
 ];
 
+/**
+ * The tutor needs `/api/tutor`, which needs a server to hold the API key.
+ * A static export (GitHub Pages) has no server, so the panel explains itself
+ * instead of firing requests at an endpoint that isn't there. Inlining the key
+ * client-side would "fix" this by publishing it — never do that.
+ */
+const IS_STATIC_BUILD = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
+
 export default function TutorChat({ lessonContext }: { lessonContext?: LessonContext }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -140,7 +148,30 @@ export default function TutorChat({ lessonContext }: { lessonContext?: LessonCon
           </header>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3">
-            {messages.length === 0 ? (
+            {IS_STATIC_BUILD ? (
+              <div className="py-2">
+                <p className="text-sm leading-relaxed text-ink-300">
+                  The tutor isn&apos;t available on this deployment.
+                </p>
+                <p className="mt-2.5 text-[13px] leading-relaxed text-ink-400">
+                  It streams from the Claude API through a server route that
+                  keeps the API key secret. GitHub Pages only serves static
+                  files, so there&apos;s no server to run it — and putting the
+                  key in the page itself would expose it to everyone.
+                </p>
+                <p className="mt-2.5 text-[13px] leading-relaxed text-ink-400">
+                  To use it, run the app locally with an{" "}
+                  <code className="rounded border border-ink-700 bg-ink-850 px-1 py-0.5 font-mono text-[11px] text-indigo-300">
+                    ANTHROPIC_API_KEY
+                  </code>
+                  , or deploy somewhere that runs server code.
+                </p>
+                <p className="mt-3 text-[13px] leading-relaxed text-ink-500">
+                  Everything else — lessons, quizzes, and all five labs — works
+                  here exactly as intended.
+                </p>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="py-4">
                 <p className="text-sm leading-relaxed text-ink-400">
                   I can explain anything in this course, work through examples,
@@ -200,6 +231,7 @@ export default function TutorChat({ lessonContext }: { lessonContext?: LessonCon
             )}
           </div>
 
+          {!IS_STATIC_BUILD && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -240,6 +272,7 @@ export default function TutorChat({ lessonContext }: { lessonContext?: LessonCon
               </button>
             )}
           </form>
+          )}
         </div>
       )}
     </>

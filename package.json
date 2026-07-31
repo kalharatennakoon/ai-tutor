@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:static": "NEXT_PUBLIC_STATIC_EXPORT=true next build"
   },
   "repository": {
     "type": "git",
