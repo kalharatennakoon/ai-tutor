@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 /*
-  Dark-first palette. The app is a focused reading surface, so the base is a
-  desaturated near-black with a slight blue cast, and colour is reserved for
+  Light-first palette. The app is a focused reading surface, so the base is a
+  desaturated near-white with a slight blue cast, and colour is reserved for
   course identity and interactive state.
 */
 @theme {
-  --color-ink-950: #08090d;
-  --color-ink-900: #0d0f15;
-  --color-ink-850: #12141c;
-  --color-ink-800: #171a24;
-  --color-ink-700: #232734;
-  --color-ink-600: #333949;
-  --color-ink-500: #545b70;
-  --color-ink-400: #7c8398;
-  --color-ink-300: #a6acbd;
-  --color-ink-200: #cdd2de;
-  --color-ink-100: #e8eaf0;
+  --color-ink-950: #f2f3f7;
+  --color-ink-900: #eaecf2;
+  --color-ink-850: #e3e5ed;
+  --color-ink-800: #dbdee8;
+  --color-ink-700: #cbcfdc;
+  --color-ink-600: #b6bccc;
+  --color-ink-500: #8f96ab;
+  --color-ink-400: #676e83;
+  --color-ink-300: #424859;
+  --color-ink-200: #212632;
+  --color-ink-100: #0f1117;
 
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Helvetica Neue", Arial, sans-serif;
@@ -25,7 +25,7 @@
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
