@@ -12,11 +12,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08090d",
+  themeColor: "#f2f3f7",
   width: "device-width",
   initialScale: 1,
   // Allow pinch-zoom — capping it is an accessibility regression.
   maximumScale: 5,
+  // Without this, `env(safe-area-inset-*)` resolves to 0 on iOS, and fixed
+  // bottom-anchored elements (the tutor launcher) can sit under Safari's own
+  // toolbar / the home-indicator gesture area, making them untappable.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -35,8 +39,8 @@ export default function RootLayout({
         <main id="main">{children}</main>
         <footer className="mt-24 border-t border-ink-800 px-5 py-10 text-center text-sm text-ink-500">
           <p>
-            Built with Next.js and the Claude API. Progress is stored locally in
-            your browser.
+            Built with Next.js and a local Ollama model. Progress is stored
+            locally in your browser.
           </p>
         </footer>
       </body>

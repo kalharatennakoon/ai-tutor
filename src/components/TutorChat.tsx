@@ -111,7 +111,8 @@ export default function TutorChat({ lessonContext }: { lessonContext?: LessonCon
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-indigo-950/50 transition-transform hover:scale-105 active:scale-95"
+        aria-label={open ? "Close tutor chat" : "Ask the tutor"}
+        className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-xl shadow-indigo-950/50 transition-transform hover:scale-105 active:scale-95"
       >
         <span aria-hidden="true">{open ? "✕" : "✦"}</span>
         <span className="hidden sm:inline">{open ? "Close" : "Ask the tutor"}</span>
@@ -121,7 +122,7 @@ export default function TutorChat({ lessonContext }: { lessonContext?: LessonCon
         <div
           role="dialog"
           aria-label="AI tutor chat"
-          className="animate-fade-rise fixed inset-x-3 bottom-20 z-50 flex max-h-[min(70dvh,34rem)] flex-col overflow-hidden rounded-2xl border border-ink-700 bg-ink-900/95 shadow-2xl backdrop-blur-xl sm:inset-x-auto sm:right-5 sm:w-[26rem]"
+          className="animate-fade-rise fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-50 flex max-h-[min(70dvh,34rem)] flex-col overflow-hidden rounded-2xl border border-ink-700 bg-ink-900/95 shadow-2xl backdrop-blur-xl sm:inset-x-auto sm:right-5 sm:w-[26rem]"
         >
           <header className="flex items-center justify-between gap-3 border-b border-ink-800 px-4 py-3">
             <div className="min-w-0">
