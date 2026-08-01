@@ -1,11 +1,11 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 /** The tutor is per-request and stateful in the client, so never cache it. */
 export const dynamic = "force-dynamic";
 
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-5";
+const OLLAMA_HOST = process.env.OLLAMA_HOST ?? "http://localhost:11434";
+const MODEL = process.env.OLLAMA_MODEL ?? "qwen2.5-coder:7b";
 
 /**
  * Stable across every request, so it sits first in the system array behind a
@@ -61,17 +61,9 @@ function parseMessages(raw: unknown): IncomingMessage[] | null {
   return messages;
 }
 
-export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json(
-      {
-        error:
-          "ANTHROPIC_API_KEY is not set. Copy .env.example to .env.local and add your key.",
-      },
-      { status: 503 },
-    );
-  }
+type OllamaChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
+export async function POST(request: Request) {
   let body: TutorRequest;
   try {
     body = (await request.json()) as TutorRequest;
@@ -87,63 +79,57 @@ export async function POST(request: Request) {
     );
   }
 
-  const client = new Anthropic();
-
-  const system: Anthropic.TextBlockParam[] = [
-    { type: "text", text: TUTOR_PERSONA, cache_control: { type: "ephemeral" } },
-  ];
-
+  let system = TUTOR_PERSONA;
   if (body.lessonContext) {
     const { courseTitle, lessonTitle, summary } = body.lessonContext;
-    system.push({
-      type: "text",
-      text: `The learner is currently on the lesson "${lessonTitle}" in the course "${courseTitle}" (${summary}). Assume that context unless they ask about something else.`,
-    });
+    system += `\n\nThe learner is currently on the lesson "${lessonTitle}" in the course "${courseTitle}" (${summary}). Assume that context unless they ask about something else.`;
   }
+
+  const ollamaMessages: OllamaChatMessage[] = [{ role: "system", content: system }, ...messages];
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        const messageStream = client.messages.stream({
-          model: MODEL,
-          max_tokens: 8192,
-          // Opus 5 thinks by default and max_tokens caps thinking + text together.
-          // Low effort keeps a tutoring reply snappy while leaving output headroom.
-          output_config: { effort: "low" },
-          system,
-          messages,
+        const response = await fetch(`${OLLAMA_HOST}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: MODEL, messages: ollamaMessages, stream: true }),
         });
 
-        // `text` yields only the delta string — simpler than filtering raw events.
-        for await (const delta of messageStream) {
-          if (
-            delta.type === "content_block_delta" &&
-            delta.delta.type === "text_delta"
-          ) {
-            controller.enqueue(encoder.encode(delta.delta.text));
-          }
+        if (!response.ok || !response.body) {
+          const detail = await response.text().catch(() => "");
+          throw new Error(detail || `Ollama request failed (${response.status})`);
         }
 
-        // Surfaces API-level errors that don't throw, e.g. a safety refusal.
-        const final = await messageStream.finalMessage();
-        if (final.stop_reason === "refusal") {
-          controller.enqueue(
-            encoder.encode(
-              "\n\n_I can't help with that one. Try rephrasing, or ask about something else in the course._",
-            ),
-          );
+        // Ollama streams newline-delimited JSON objects, not SSE, so we split on "\n".
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            const chunk = JSON.parse(line) as { message?: { content?: string }; error?: string };
+            if (chunk.error) throw new Error(chunk.error);
+            if (chunk.message?.content) controller.enqueue(encoder.encode(chunk.message.content));
+          }
         }
       } catch (error) {
         console.error("[/api/tutor] stream failed:", error);
 
         const message =
-          error instanceof Anthropic.RateLimitError
-            ? "\n\n_Rate limited — give it a few seconds and try again._"
-            : error instanceof Anthropic.AuthenticationError
-              ? "\n\n_Your ANTHROPIC_API_KEY was rejected. Check the value in .env.local._"
-              : "\n\n_Something went wrong reaching the tutor. Try again._";
+          error instanceof TypeError
+            ? `\n\n_Can't reach Ollama at ${OLLAMA_HOST}. Make sure \`ollama serve\` is running._`
+            : "\n\n_Something went wrong reaching the tutor. Try again._";
 
         controller.enqueue(encoder.encode(message));
       } finally {

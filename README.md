@@ -11,22 +11,24 @@ and a streaming AI tutor answers questions with the current lesson as context.
 | --- | --- |
 | Framework | Next.js 16 (App Router, Turbopack) |
 | UI | React 19, Tailwind CSS v4 |
-| AI | Claude API via `@anthropic-ai/sdk`, streamed |
+| AI | Local Ollama (`qwen2.5-coder:7b`), streamed |
 | Progress | `localStorage` (no backend, no accounts) |
 
 ## Getting started
 
 ```bash
+ollama pull qwen2.5-coder:7b   # once, if you haven't already
+ollama serve                  # if it isn't already running
 npm install
-cp .env.example .env.local   # add your ANTHROPIC_API_KEY
 npm run dev
 ```
 
 Open http://localhost:3000.
 
-The courses, quizzes, and all five labs work **without** an API key — only the
-tutor chat needs one. Without a key, `/api/tutor` returns a 503 with a message
-explaining what to set, and the chat panel surfaces it inline.
+The courses, quizzes, and all five labs work regardless of the tutor. The
+tutor chat streams from a local `ollama` instance — no API key needed. If
+Ollama isn't reachable, the chat panel surfaces an inline error explaining
+how to start it.
 
 ```bash
 npm run build         # production build (includes the tutor API route)
@@ -48,12 +50,11 @@ that path prefix to the build via `NEXT_PUBLIC_BASE_PATH`, so renaming the repo
 needs no code change.
 
 > **The AI tutor does not work on GitHub Pages.** Pages serves static files
-> only, and `/api/tutor` needs a server to hold the API key. The workflow
-> deletes `src/app/api` before building, and the chat panel detects the static
-> build and explains this instead of calling a dead endpoint.
+> only, and `/api/tutor` needs a server to reach Ollama. The workflow deletes
+> `src/app/api` before building, and the chat panel detects the static build
+> and explains this instead of calling a dead endpoint.
 >
-> The fix is *not* to move the key into client code — that publishes it to
-> anyone who views source. Deploy somewhere with server support instead.
+> Deploy somewhere with server support instead, running Ollama alongside it.
 
 Everything else — all lessons, quizzes, and all five labs — works fully on
 Pages, since the labs compute in the browser.
@@ -61,10 +62,10 @@ Pages, since the labs compute in the browser.
 ### Anywhere that runs server code
 
 For the complete app including the tutor, deploy to a host that supports
-Next.js server rendering (Vercel, Netlify, Cloudflare, a container, a VPS).
-Set `ANTHROPIC_API_KEY` in that host's environment and deploy normally — no
-config changes, since the export settings only activate when
-`NEXT_PUBLIC_STATIC_EXPORT=true`.
+Next.js server rendering (Vercel, Netlify, Cloudflare, a container, a VPS)
+and can also reach an Ollama instance (set `OLLAMA_HOST` if it isn't on
+`localhost:11434`). No other config changes, since the export settings only
+activate when `NEXT_PUBLIC_STATIC_EXPORT=true`.
 
 ## Project layout
 
@@ -75,7 +76,7 @@ src/
 │   ├── learn/[courseId]/page.tsx             # course outline
 │   ├── learn/[courseId]/[lessonId]/page.tsx  # lesson (statically generated)
 │   ├── playground/page.tsx                   # all labs, standalone
-│   └── api/tutor/route.ts                    # streaming Claude endpoint
+│   └── api/tutor/route.ts                    # streaming Ollama endpoint
 ├── components/
 │   ├── LessonRenderer.tsx                    # maps content blocks → components
 │   ├── TutorChat.tsx                         # streaming chat panel
@@ -139,15 +140,13 @@ All labs compute in the browser — no API calls, no keys, nothing to rate-limit
 ## Notes on the tutor endpoint
 
 - **Streaming.** `/api/tutor` returns a `ReadableStream` of plain text; the
-  client appends deltas as they arrive.
-- **Prompt caching.** The tutor persona sits first in the `system` array behind
-  a cache breakpoint, with per-lesson context after it. Caching is a prefix
-  match, so anything variable must come last.
-- **Model.** Defaults to `claude-opus-5`; override with `ANTHROPIC_MODEL`.
-  Effort is set to `low` to keep replies snappy, with `max_tokens` headroom
-  since thinking and output text share that budget.
+  client appends deltas as they arrive. Internally it reads Ollama's
+  newline-delimited JSON chunks from `/api/chat` and re-emits just the text.
+- **Model.** Defaults to `qwen2.5-coder:7b`; override with `OLLAMA_MODEL`.
+  Ollama host defaults to `http://localhost:11434`; override with
+  `OLLAMA_HOST`.
 - **Validation.** Message count, roles, and per-message length are checked
-  before anything reaches the API.
+  before anything reaches Ollama.
 
 ## Two Next.js gotchas this codebase works around
 

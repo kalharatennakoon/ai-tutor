@@ -18,10 +18,10 @@ const SUGGESTIONS = [
 ];
 
 /**
- * The tutor needs `/api/tutor`, which needs a server to hold the API key.
- * A static export (GitHub Pages) has no server, so the panel explains itself
- * instead of firing requests at an endpoint that isn't there. Inlining the key
- * client-side would "fix" this by publishing it — never do that.
+ * The tutor needs `/api/tutor`, a server route that proxies to a locally
+ * running Ollama instance. A static export (GitHub Pages) has no server, so
+ * the panel explains itself instead of firing requests at an endpoint that
+ * isn't there.
  */
 const IS_STATIC_BUILD = process.env.NEXT_PUBLIC_STATIC_EXPORT === "true";
 
@@ -154,17 +154,24 @@ export default function TutorChat({ lessonContext }: { lessonContext?: LessonCon
                   The tutor isn&apos;t available on this deployment.
                 </p>
                 <p className="mt-2.5 text-[13px] leading-relaxed text-ink-400">
-                  It streams from the Claude API through a server route that
-                  keeps the API key secret. GitHub Pages only serves static
-                  files, so there&apos;s no server to run it — and putting the
-                  key in the page itself would expose it to everyone.
+                  It streams from a locally running{" "}
+                  <code className="rounded border border-ink-700 bg-ink-850 px-1 py-0.5 font-mono text-[11px] text-indigo-300">
+                    ollama
+                  </code>{" "}
+                  model through a server route. GitHub Pages only serves
+                  static files, so there&apos;s no server to reach Ollama on
+                  your machine.
                 </p>
                 <p className="mt-2.5 text-[13px] leading-relaxed text-ink-400">
-                  To use it, run the app locally with an{" "}
+                  To use it, run the app locally with{" "}
                   <code className="rounded border border-ink-700 bg-ink-850 px-1 py-0.5 font-mono text-[11px] text-indigo-300">
-                    ANTHROPIC_API_KEY
-                  </code>
-                  , or deploy somewhere that runs server code.
+                    ollama serve
+                  </code>{" "}
+                  and the{" "}
+                  <code className="rounded border border-ink-700 bg-ink-850 px-1 py-0.5 font-mono text-[11px] text-indigo-300">
+                    qwen2.5-coder:7b
+                  </code>{" "}
+                  model pulled, or deploy somewhere that runs server code.
                 </p>
                 <p className="mt-3 text-[13px] leading-relaxed text-ink-500">
                   Everything else — lessons, quizzes, and all five labs — works
